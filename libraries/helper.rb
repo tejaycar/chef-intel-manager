@@ -7,10 +7,12 @@ require 'rubygems'
 require 'json'
 require "uri"
 
-def build_uri(path = "")
-  manager = search(:node, "chef_environment:#{node.chef_environment} AND provides_intel_manager:true")
+def build_uri(path = "", cluster = "")
+  manager = search(:node, "provides_intel_manager#{node[:intel_manager][:cluster]}:true")
   if manager && manager.ipaddress
-    "https://#{manager['ipaddress']}:#{manager['intel']['server']['port']}/restapi/intelcloud/api/v1/cluster" + path
+    uri = "https://#{manager['ipaddress']}:#{manager[:intel_manager][:port]}/restapi/intelcloud/api/v2/cluster"
+    uri += '/#{cluster}' if cluster
+    uri += path
   else
     nil
   end
@@ -21,11 +23,11 @@ def toConfigList(source)
   unless (source.nil? || source.is_a?(Hash))
     raise Exception.new("Illegal data type (#{source.class}) in configuration - #{source.to_s}")
   end
-  
+
   if (source.nil? || source.length == 0)
     return {:items => []}
   end
-  
+
   json = {}
   json[:items] = []
   source.each do |name, value|
@@ -38,55 +40,55 @@ def get_response(uri_string, request)
 {
   request.basic_auth("admin","admin")
   uri = URI.parse(uri_string)
-  
+
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-  
+
   return http.request(request)
 }
 
 
-def GET_request(path)
-  uri_string = build_uri(path)
+def GET_request(path, cluster)
+  uri_string = build_uri(path, cluster)
   if uri_string.nil?
     return imNotAvailable
   end
-  
+
   request = Net::HTTP::Get.new(uri_string)
-  
+
   Chef::Log.debug "sending get #{uri_string}"
-    
+
   response = getResponse(uri_string, request)
 end
 
-def POST_request(path, message=nil)
-  uri_string = build_uri(path)
+def POST_request(path, cluster, message=nil)
+  uri_string = build_uri(path, cluster)
   if uri_string.nil?
     return imNotAvailable
   end
-  
+
   request = Net::HTTP::Post.new(uri_string)
-  
+
   unless message.nil?
-		request.body = message 
+		request.body = message
 		request['Content-Type'] = "application/json"
   end
-  
+
   Chef::Log.debug "sending post #{uri_string}, body= #{message}"
-    
+
   response = get_response(uri_string, request)
 end
 
-def POST_form(path, fileName)
-  uri_string = build_uri(path)	
+def POST_form(path, cluster, fileName)
+  uri_string = build_uri(path, cluster)
   if uri_string.nil?
     return imNotAvailable
   end
-  
+
 #  request = Net::HTTP::Post.new(uri_string + path)
 #  setAuth(request)
-#  boundary = "boundary"	
+#  boundary = "boundary"
 #  post_body = []
 #  post_body << "--#{boundary}\r\n"
 #  post_body << "Content-Disposition: form-data; name=\"datafile\"; filename=\"#{File.basename(fileName)}\"rn"
@@ -97,49 +99,49 @@ def POST_form(path, fileName)
 #  request.body = post_body.join
 #  request.set_form_data({"file" => File.read(fileName)})
 #  request['Content-Type'] = "multipart/form-data, boundary=#{boundary}"
-  
+
   bash_command = "curl -k -u admin:admin -F \"file=@#{fileName}\" #{uri_string}"
-  
+
   Chef::Log.info "sending post using command"
   Chef::Log.info "#{bash_command}"
   command_result = `#{bash_command}`
-  
+
 #  response = get_response(uri_string, request)
 end
 
-def PUT_request(path, message)
-  uri_string = buid_uri(path)
+def PUT_request(path, cluster, message)
+  uri_string = buid_uri(path, cluster)
   if uri_string.nil?
     return imNotAvailable
   end
-    
+
   request = Net::HTTP::Put.new(uri_string)
   unless message.nil?
-		request.body = message 
+		request.body = message
 		request['Content-Type'] = "application/json"
   end
-  
+
   Chef::Log.debug "sending put #{uri_string}, body= #{message}"
-    
+
   response = get_response(uri_string, request)
 end
 
-def deleteRequest(path)
-  uri_string = build_uri(path)
+def deleteRequest(path, cluster)
+  uri_string = build_uri(path, cluster)
   if uri_string.nil?
     return imNotAvailable
   end
-  
+
   request = Net::HTTP::Delete.new(uri_string + path)
-  
+
   Chef::Log.debug "sending delete #{uri_string}, body= #{message}"
-    
+
   response = get_response(uri_string, request)
 end
 
 def manager_not_available()
   mockResponse = "Intel Manager not found"
-  def mockResponse.code 
+  def mockResponse.code
     "1000"
   end
   def mockResponse.body

@@ -1,0 +1,37 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+chef_server_ip = '192.168.33.10'
+chef_server_port = '8889'
+
+Vagrant.configure('2') do |config|
+
+  config.vm.box = "centos65"
+  config.vm.box_url = "https://github.com/2creatives/vagrant-centos/releases/download/v6.5.1/centos65-x86_64-20131205.box"
+
+  config.omnibus.chef_version = :latest
+  
+  config.vm.define 'master', primary: true do |master|
+    master.vm.network :private_network, ip: chef_server_ip
+    
+    master.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+    end
+
+    master.vm.synced_folder "../../", "/cookbooks"
+
+    pkg_cmd = <<SCRIPT
+      yum install --assumeyes --quiet --errorlevel=0 rubygems ruby-devel
+      gem install chef-zero --no-ri --no-rdoc
+      exec nohup chef-zero --host #{chef_server_ip} --port #{chef_server_port} &
+	    knife cookbook upload -c /cookbooks/chef-intel-manager/test/chef/knife.rb \
+      --server-url http://#{chef_server_ip}:#{chef_server_port} chef-intel-manager
+SCRIPT
+
+    master.vm.provision :shell, :inline => pkg_cmd
+  end
+
+  config.vm.define 'nn' do |nn|
+    nn.vm.network :private_network, ip: '192.168.33.11'
+  end
+end

@@ -1,0 +1,20 @@
+os_repo=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=os
+os_repo_username=
+os_repo_password=
+os_repo_proxy=
+idh_repo= <%= idh_repo %>
+idh_repo_username=
+idh_repo_password=
+idh_repo_proxy=
+# 1.nothing to do,already set up a repo 2.set up an entry for existing repo 3.Remove all entries and set up an entry for an existing repo
+how_to_setup_os_repo=1
+#bind intel manager to which network interface,input like 'eth0','eth1'
+network_interface=eth0
+#dialog,commandline,silent
+mode=silent
+#if empty, it is 'disagree'. If you want to accept, the value is 'accept'
+accept_jdk_license=accept
+# 1.set up an entry for existing repo 2.nothing to do,already set up a repo
+how_to_setup_idh_repo=1
+#disablefirewallselinux  1.disable firewall 2.nothing to do
+firewall_selinux_setting=1

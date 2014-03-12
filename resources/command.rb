@@ -12,5 +12,6 @@ attribute :wait4complete,  :kind_of => [TrueClass, FalseClass], :default => true
 attribute :timeout,        :kind_of => Integer, :default => 300 #5 minutes
 attribute :fail_on_error,  :kind_of => [TrueClass, FalseClass], :default => true #if true a failed command will raise an exception, if false it will result in the resource returning as not updated
 attribute :requires,       :kind_of => [String, Hash], :default => nil
+attribute :cluster,        :kind_of => String, :default => ""
 
 

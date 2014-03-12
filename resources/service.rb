@@ -9,7 +9,7 @@ serviceTypes = ['HDFS', 'MAPREDUCE', 'HBASE', 'OOZIE', 'ZOOKEEPER', 'HUE', 'YARN
 serviceTypes += serviceTypes.map{|st| st.to_sym}
 
 attribute :servicename,   :kind_of => String, :name_attribute => true
-attribute :cluster,       :kind_of => String, :default => node[:intel][:cluster], :required => true
+attribute :cluster,       :kind_of => String, :default => node[:intel_manager][:cluster], :required => true
 attribute :type,          :kind_of => [String, Symbol], :required => true, :equal_to => serviceTypes
 attribute :config,        :kind_of => [ String, Hash ]
 attribute :timeout,       :kind_of => Integer, :default => 60000 #100 minutes
